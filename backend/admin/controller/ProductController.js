@@ -123,3 +123,58 @@ exports.getProductById = async (req, res) => {
     });
   }
 };
+// lấy thêm các sảm phẩm theo status
+exports.getProductsBystatus = async(req,res)=>{
+  try{
+    const {status} = req.params;
+    const statusNumber = Number(status);
+    const products = await Product.find({
+      status: statusNumber
+    });
+  }catch(error){
+    res.status(500).json({
+      message: "không thể lấy danh sách sản phẩm theo status"
+    });
+  }
+}
+//lấy sản phẩm theo trang
+exports.getAllProducts = async(req,res)=>{
+  try {
+    const {page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const products = await Products.find().skip(skip).limit(Number(limit)).exec();
+    const totalProducts = await Products.countDocuments();
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.json({
+      products,
+      totalPages,
+      currentPage: Number(page),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message : " không thể lấy sản phẩm"
+    })
+  }
+}
+// kiểm tra sản phẩm có tồn tại hay không ?
+const checkProdcutNameExists = async(name) => 
+  {
+  const product = await Product.findone({
+    name : {$regex: new Regexp("^"+ name + "$", "i")},
+  });
+  return product;
+}
+// tao mã sản phẩm tự động của barcode
+const generateProductCode = async () =>{
+  const lastProduct = await Product.findone().sort({
+    code: -1}).exec();
+    if(!lastproduct) return "P001";
+
+  const lastCode = lastProduct.code;
+  const lastNumber = parseInt(lastCode.reqlace("P",""));
+
+  const newNumber = lastNumber + 1;
+  return `P${newNumber.toString().padStart(3,"0")}`;
+}
