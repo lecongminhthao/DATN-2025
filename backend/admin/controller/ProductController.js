@@ -3,35 +3,34 @@ const Product = require("../model/ProductModel");
 // tạo sản phẩm
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, description, category, image } = req.body;
-    const existingProduct = await checkProductExists(name);
+    const { name, status, importPrice, salePrice } = req.body;
+
+    const existingProduct = await checkProductNameExist(name);
     if (existingProduct) {
-      return res.status(400).json({ message: "Sản phẩm đã tồn tại" });
+      return res.status(400).json({ message: "Tên sản phẩm đã tồn tại." });
     }
+
     const productCode = await generateProductCode();
     const discountPrice = 0;
+
     const newProduct = new Product({
       name,
-      price,
-      description,
-      category,
-      image,
-      productCode,
+      code: productCode,
+      status: status || 1,
+      importPrice,
+      salePrice,
       discountPrice,
     });
+
     await newProduct.save();
-    res.status(201).json({
-      message: "Sản phẩm đã được tạo thành công",
-      product: newProduct,
-    });
+    res.status(201).json(newProduct);
   } catch (error) {
-    res.status(500).json({
-      message: "tạo thất bại",
-    });
+    res.status(500).json({ message: "Không thể tạo sản phẩm." });
   }
 };
 
-// tạo mới produtc
+
+// cập nhật sản phẩm 
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -56,36 +55,6 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Sản phẩm không tồn tại" });
     }
     res.status(200).json(updatProduct);
-  } catch (error) {
-    res.status(500).json({
-      message: "Cập nhật sản phẩm thất bại",
-    });
-  }
-};
-// sửa sản phẩm
-exports.updateProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, status, importPrice, salePrice, discountPrice } = req.body;
-    const existingProduct = await checkProdcutNameExists(name);
-    if (existingProduct && existingProduct._id.toString() !== id) {
-      return res.status(400).json({ message: "Tên sản phẩm đã tồn tại" });
-    }
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        name,
-        status,
-        importPrice,
-        salePrice,
-        discountPrice,
-      },
-      { new: true }
-    );
-    if (!updatedProduct) {
-      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
-    }
-    res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(500).json({
       message: "Cập nhật sản phẩm thất bại",
@@ -131,6 +100,7 @@ exports.getProductsBystatus = async(req,res)=>{
     const products = await Product.find({
       status: statusNumber
     });
+    res.status(200).json(products)
   }catch(error){
     res.status(500).json({
       message: "không thể lấy danh sách sản phẩm theo status"
@@ -158,6 +128,7 @@ exports.getAllProducts = async(req,res)=>{
     })
   }
 }
+
 // kiểm tra sản phẩm có tồn tại hay không ?
 const checkProdcutNameExists = async(name) => 
   {

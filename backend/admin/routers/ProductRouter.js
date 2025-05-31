@@ -10,4 +10,10 @@ router.put("/products/:id", productController.updateProduct);
 
 router.delete("/products/:id", productController.deleteProduct);
 
-// router.get
+router.get("products/:id", productController.getProductById)
+
+router.get(
+    "/products/getbystatus:status",productController.getProductsBystatus
+)
+
+module.exports = router;

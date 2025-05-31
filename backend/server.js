@@ -7,6 +7,7 @@ const authRoutes = require("./admin/routers/Auth");
 const ColorRouter = require("./admin/routers/ColorRouter");
 const authMiddleware = require("./admin/middleware/authMiddleware");
 const employeeRoutes = require("./admin/routers/EmployessRouter");
+const ProductRouter = require("./admin/routers/ProductRouter")
 
 dotenv.config();
 
@@ -27,6 +28,9 @@ app.use((req, res, next) => {
 });
 app.use("/api", authRoutes);
 app.use("/admin", authMiddleware(["Admin"]), ColorRouter);
+
+app.use("/admin", authMiddleware(["Admin"]), ProductRouter);
+
 app.use("/admin", authMiddleware(["Admin"]), employeeRoutes);
 mongoose
   .connect("mongodb://127.0.0.1:27017/rhodi-datn")
