@@ -6,33 +6,37 @@ exports.createProductDetail = async (req, res) => {
     const { product, color, size, category, producttype, quantity, barcode } =
       req.body;
 
-    const errors = [];
+    const errors = {};
 
-    if (!product) errors.product = "Sản phẩm không được để trống.";
-    if (!color) errors.color = "Màu sắc không được để trống.";
-    if (!size) errors.size = "Kích thước không được để trống.";
-    if (!category) errors.category = "Danh mục không được để trống.";
-    if (!producttype) errors.producttype = "Loại sản phẩm không được để trống.";
+    if (!product) errors.product = "Sản phẩm không được để trống";
+    if (!color) errors.color = "Màu sắc không được để trống";
+    if (!size) errors.size = "Kích cỡ không được để trống";
+    if (!category) errors.category = "Danh mục không được để trống";
+    if (!producttype) errors.producttype = "Loại sản phẩm không được để trống";
     if (!quantity || quantity < 0) errors.quantity = "Số lượng không hợp lệ";
     if (!barcode || barcode.length !== 13)
-      errors.barcode = "Mã vạch phải có 13 ký tự";
+      errors.barcode = "Mã barcode phải có 13 ký tự";
 
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ errors });
     }
 
+    // ✅ Kiểm tra trùng chi tiết sản phẩm
     const existingDetail = await ProductDetail.findOne({
-      product,
-      color,
-      size,
-      category,
-      producttype,
+        product,
+        color,
+        size,
+        category,
+        producttype,
     });
 
     if (existingDetail) {
-      return res.status(400).json({ error: "Sản phẩm đã tồn tại" });
+      return res.status(400).json({
+        error: "Chi tiết sản phẩm với các thuộc tính này đã tồn tại!",
+      });
     }
 
+    // Nếu không trùng thì tạo mới
     const status = 1;
     const discountPrice = 0;
 
@@ -48,35 +52,39 @@ exports.createProductDetail = async (req, res) => {
       discountPrice,
     });
 
-    const saveProductDetail = await newProductDetail.save();
+    const savedProductDetail = await newProductDetail.save();
 
-    res.status(201).json(saveProductDetail);
-  } catch (error) {
-    res.status(500).json({ error: "Đã xảy ra lỗi server" });
+    res.status(201).json(savedProductDetail);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Đã xảy ra lỗi server." });
   }
 };
 
 exports.checkBarcode = async (req, res) => {
-    const { barcode }   = req.body;
+  const { barcode } = req.body;
 
-    try {
-        if (barcode.length !== 13) {
-            return res.status(400).json({ error: "Mã vạch không hợp lệ" });
-        }
-        
-        const existingProduct = await ProductDetail.findOne({ barcode });
-        
-        if (existingProduct) {
-            return res.status(200).json({ isUnique: false });
-        }
-
-        res.status(200).json({ isUnique: true });
+  try {
+    // Kiểm tra xem barcode có đúng định dạng không
+    if (barcode.length !== 13) {
+      return res.status(400).json({ error: "Mã barcode phải có 13 ký tự." });
     }
-    catch (error) {
-        res.status(500).json({ error: "Có lỗi khi kiểm tra barcode" });
-    }
-}
 
+    // Kiểm tra trong cơ sở dữ liệu xem mã barcode có tồn tại không
+    const existingProduct = await ProductDetail.findOne({ barcode });
+
+    if (existingProduct) {
+      // Nếu mã barcode đã tồn tại, trả về isUnique: false
+      return res.status(200).json({ isUnique: false });
+    }
+
+    // Nếu không tồn tại, trả về isUnique: true
+    res.status(200).json({ isUnique: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Có lỗi khi kiểm tra mã barcode" });
+  }
+};
 exports.getProductDetailList = async (req, res) => {
   try {
     let { page, limit } = req.query;
@@ -118,7 +126,6 @@ exports.getProductDetailList = async (req, res) => {
     res.status(500).json({ error: "Có lỗi xảy ra" });
   }
 };
-
 exports.getProductDetailById = async (req, res) => {
   const { id } = req.params; // Lấy ID từ tham số URL
 
@@ -145,7 +152,6 @@ exports.getProductDetailById = async (req, res) => {
     res.status(500).json({ error: "Có lỗi xảy ra khi lấy chi tiết sản phẩm." });
   }
 };
-
 exports.updateProductDetail = async (req, res) => {
   const { id } = req.params;
   const { product, color, size, category, producttype, quantity, status } =
