@@ -9,6 +9,7 @@ const authMiddleware = require("./admin/middleware/authMiddleware");
 const ProductDetailRouter = require("./admin/routers/ProductDetailRouter");
 const employeeRoutes = require("./admin/routers/EmployessRouter");
 const categoryRouter = require("./admin/routers/CategoryRouter");
+const sizeRouter = require("./admin/routers/SizeRouter");
 
 dotenv.config();
 
@@ -32,6 +33,8 @@ app.use("/admin", authMiddleware(["Admin"]), ColorRouter);
 app.use("/admin", authMiddleware(["Admin"]), employeeRoutes);
 app.use("/admin", authMiddleware(["Admin"]), ProductDetailRouter);
 app.use("/admin", authMiddleware(["Admin"]), categoryRouter);
+app.use("/admin", authMiddleware(["Admin"]), sizeRouter);
+
 mongoose
   .connect("mongodb://127.0.0.1:27017/rhodi-datn")
   .then(() => console.log(" kết nối thành công!"))
