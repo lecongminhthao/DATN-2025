@@ -1,8 +1,25 @@
 const Image = require("../model/ImageModel");
+const Product = require("../model/ProductModel");
+const mongoose = require("mongoose");
 
 exports.createImage = async (req, res) => {
   try {
     const { productId, url, altText } = req.body;
+
+    // Kiểm tra đầu vào
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "productId không hợp lệ." });
+    }
+
+    // Kiểm tra productId có tồn tại trong database không
+    const existingProduct = await Product.findById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Sản phẩm không tồn tại." });
+    }
+
+    if (!url) {
+      return res.status(400).json({ message: "URL ảnh không được để trống." });
+    }
 
     const status = 1;
     const newImage = new Image({
@@ -15,9 +32,11 @@ exports.createImage = async (req, res) => {
     await newImage.save();
     res.status(201).json(newImage);
   } catch (error) {
+    console.error("[ERROR] createImage:", error);
     res.status(500).json({ message: "Lỗi tạo ảnh", error });
   }
 };
+
 
 // Cập nhật ảnh
 exports.updateImage = async (req, res) => {
